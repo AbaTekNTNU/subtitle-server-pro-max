@@ -1,0 +1,9 @@
+---
+import TitleLine from "../components/TitleLine.svelte";
+
+const url = import.meta.env.PUBLIC_BACKEND_URL;
+---
+
+<main class="flex w-full justify-center">
+  <TitleLine client:load base={url} />
+</main>

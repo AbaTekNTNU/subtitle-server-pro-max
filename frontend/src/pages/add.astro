@@ -1,0 +1,15 @@
+---
+import AddSong from "$lib/components/AddSong.svelte";
+import Layout from "$lib/layouts/Layout.astro";
+
+const url = import.meta.env.PUBLIC_BACKEND_URL;
+---
+
+<Layout title="Add song">
+  <main class="flex w-full flex-col items-start">
+    <a href="/" class="m-4 rounded bg-primary p-2 px-4 text-primary-foreground"
+      >Back</a
+    >
+    <AddSong client:load base={url} />
+  </main>
+</Layout>

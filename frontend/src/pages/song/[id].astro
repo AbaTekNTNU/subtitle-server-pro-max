@@ -1,0 +1,27 @@
+---
+import SongComp from "../../components/SongComp.svelte";
+import Layout from "../../layouts/Layout.astro";
+import LoadSong from "../../components/LoadSong.svelte";
+import type { Song } from "../../types";
+
+const { id } = Astro.params;
+
+const url = import.meta.env.PUBLIC_BACKEND_URL;
+
+const song: Song = await fetch(`${url}/song?id=${id}`)
+  .then((res) => res.json())
+  .catch((err) => console.error(err));
+---
+
+<Layout title={song.name}>
+  <main class="flex h-screen w-full flex-col items-start p-4">
+    <div class="flex w-full justify-between">
+      <a
+        href="/allsongs"
+        class="rounded-md bg-primary p-2 px-4 text-primary-foreground">Back</a
+      >
+      <LoadSong base={url} id={id} />
+    </div>
+    <SongComp client:load name={song.name} lines={song.lines} base={url} />
+  </main>
+</Layout>

@@ -1,0 +1,14 @@
+---
+import TitleLine from "../components/TitleLine.svelte";
+import Layout from "../layouts/Layout.astro";
+
+const url = import.meta.env.PUBLIC_BACKEND_URL;
+console.log(url);
+---
+
+<Layout title="Second Page">
+  <main class="flex h-screen w-full items-center justify-center">
+    <TitleLine client:load base={url} />
+    <h1 class="text-white">Second Page</h1>
+  </main>
+</Layout>

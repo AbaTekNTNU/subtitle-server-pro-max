@@ -1,0 +1,30 @@
+services:
+  server:
+    build:
+      context: .
+      target: final
+    ports:
+      - 3000:3000
+      depends_on:
+        db:
+          condition: service_healthy
+  db:
+    image: timescale/timescaledb:latest-pg16
+    restart: unless-stopped
+    user: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=subtitles
+      - POSTGRES_PASSWORD=example
+      - POSTGRES_USER=postgres
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  db-data:
+

@@ -1,0 +1,25 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "backend"
+path = "src/main.rs"
+
+[dependencies]
+async-stream = "0.3.6"
+axum = { version = "0.7.7", features = ["http2"] }
+axum-extra = { version = "0.9.4", features = ["typed-header"] }
+dotenvy = "0.15.7"
+futures = "0.3.31"
+futures-util = "0.3.31"
+rand = "0.8.5"
+serde = { version = "1.0.210", features = ["derive"] }
+sqlx = { version = "0.8.2", features = ["postgres", "runtime-tokio-rustls"] }
+tokio = { version = "1.40.0", features = ["full"] }
+tokio-stream = "0.1.16"
+tower-http = { version = "0.6.1", features = ["cors"] }
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+ts-rs = "10.0.0"

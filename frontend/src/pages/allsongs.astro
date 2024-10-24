@@ -1,0 +1,20 @@
+---
+import Songs from "$lib/components/Songs.svelte";
+import Layout from "$lib/layouts/Layout.astro";
+import type { Song } from "$lib/types";
+
+const url = import.meta.env.PUBLIC_BACKEND_URL;
+
+const songs: Song[] = await fetch(`${url}/songs`)
+  .then((res) => res.json())
+  .catch((err) => console.error(err));
+---
+
+<Layout title="Songs">
+  <main class="flex w-full flex-col items-start p-4">
+    <a href="/" class="rounded-md bg-primary p-2 px-4 text-primary-foreground"
+      >Go back</a
+    >
+    <Songs client:load base={url} songs={songs} />
+  </main>
+</Layout>

@@ -1,0 +1,12 @@
+---
+import Layout from "$lib/layouts/Layout.astro";
+import CanvasWrapper from "$lib/components/CanvasWrapper.svelte";
+
+const url = import.meta.env.PUBLIC_BACKEND_URL;
+---
+
+<Layout title="threejs">
+  <main class="flex h-screen flex-col items-center justify-center">
+    <CanvasWrapper client:load base={url} />
+  </main>
+</Layout>
