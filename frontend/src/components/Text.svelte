@@ -85,9 +85,19 @@
     }}
   ></T.PerspectiveCamera>
 </T.Group>
+<Sky elevation={0.5} />
 
 <T.DirectionalLight position={[10, 10, 10]} castShadow />
 
+<Grid
+  position.y={-0.001}
+  cellColor="#ffffff"
+  sectionColor="#ffffff"
+  sectionThickness={0}
+  gridSize={1000}
+  fadeDistance={250}
+  cellSize={2}
+/>
 
 {#if song}
   {#each song.lines as line, index}
