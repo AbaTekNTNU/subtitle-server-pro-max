@@ -9,11 +9,7 @@
   let error: string | null = $state(null);
 
   const handleKeyPress = (e: KeyboardEvent) => {
-    if (e.key === "Enter") {
-      console.log("Enter pressed");
-    } else {
-      console.log("Key pressed: ", e.key);
-    }
+    e.preventDefault();
 
     switch (e.key) {
       case "j":
@@ -52,6 +48,21 @@
         key_repeat = null;
         break;
 
+      case "g":
+        if (key_repeat === null) {
+          return;
+        } else {
+          post(
+            `${base}/song/next`,
+            JSON.stringify({
+              skips: Number(key_repeat) - (active_line ? active_line + 1 : 0),
+            }),
+          );
+          key_repeat = null;
+        }
+
+        break;
+
       default:
         console.log("Key pressed: ", e.key);
 
@@ -70,6 +81,8 @@
 
   let ev: EventSource;
 
+  let div: HTMLDivElement | null = $state(null);
+
   onMount(() => {
     ev = new EventSource(`${base}/line`);
 
@@ -80,6 +93,11 @@
       if (data !== "NULL") {
         // Line count is 1-indexed
         active_line = parseInt(data) - 1;
+
+        // Scroll to the active line
+        if (div) {
+          div.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
       } else {
         active_line = null;
       }
@@ -98,17 +116,23 @@
 
 <svelte:window on:keydown={handleKeyPress} on:beforeunload={() => ev.close()} />
 <div class="flex w-full flex-col gap-2">
+  {#if error}
+    <p class="text-center text-red-500">{error}</p>
+  {/if}
   <h1 class="my-4 text-center text-3xl font-bold">{name}</h1>
   <div>
     {#each lines as line, index}
       {#if index === active_line}
-        <p class="text-center text-2xl font-bold">{line}</p>
+        <div class="flex justify-center gap-2" bind:this={div}>
+          <p>👉</p>
+          <p class="text-center text-2xl font-bold">{line}</p>
+        </div>
       {:else}
-        <p class="h-6 text-center">{line}</p>
+        <div class="flex justify-center gap-2">
+          <p>{index + 1}.</p>
+          <p class="h-6 text-center">{line}</p>
+        </div>
       {/if}
     {/each}
   </div>
-  {#if error}
-    <p class="text-center text-red-500">{error}</p>
-  {/if}
 </div>
