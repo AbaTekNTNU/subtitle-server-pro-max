@@ -33,9 +33,9 @@ pub struct Vector3 {
 impl Default for Vector3 {
     fn default() -> Self {
         Self {
-            x: rand::thread_rng().gen_range(1..50) as f64,
+            x: rand::thread_rng().gen_range(-40..40) as f64,
             y: rand::thread_rng().gen_range(1..50) as f64,
-            z: rand::thread_rng().gen_range(1..50) as f64,
+            z: rand::thread_rng().gen_range(-25..25) as f64,
         }
     }
 }

@@ -20,7 +20,7 @@ const song: Song = await fetch(`${url}/song?id=${id}`)
         href="/allsongs"
         class="rounded-md bg-primary p-2 px-4 text-primary-foreground">Back</a
       >
-      <LoadSong base={url} id={id} />
+      <LoadSong client:load base={url} id={id} />
     </div>
     <SongComp client:load name={song.name} lines={song.lines} base={url} />
   </main>

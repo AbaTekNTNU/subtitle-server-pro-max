@@ -92,3 +92,27 @@ pub async fn sse_load_song(
     })
     .keep_alive(KeepAlive::default())
 }
+
+pub async fn sse_scene_ready(
+    State(state): State<Store>,
+) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+    let mut receiver = state.scene_ready.subscribe();
+
+    Sse::new(try_stream! {
+        loop {
+            match receiver.recv().await {
+                Ok(i) => {
+                    let event = Event::default()
+                        .data(i.to_string());
+
+                    yield event;
+                },
+
+                Err(e) => {
+                    tracing::error!(error = ?e, "Failed to get");
+                }
+            }
+        }
+    })
+    .keep_alive(KeepAlive::default())
+}
