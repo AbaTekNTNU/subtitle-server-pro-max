@@ -5,9 +5,9 @@ services:
       target: final
     ports:
       - 3000:3000
-      depends_on:
-        db:
-          condition: service_healthy
+    depends_on:
+      db:
+        condition: service_healthy
   db:
     image: timescale/timescaledb:latest-pg16
     restart: unless-stopped

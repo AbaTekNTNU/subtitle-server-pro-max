@@ -3,18 +3,29 @@ use axum::{
     http::StatusCode,
     Form, Json,
 };
+use pgvector::Vector;
 use serde::{Deserialize, Serialize};
 use sqlx::query;
 use tracing::info;
 
-use crate::{types::LoadSong, Store};
+use crate::{
+    types::{LineComp, LoadSong},
+    Store,
+};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, sqlx::Type)]
 pub struct Song {
     #[serde(default)]
     id: i32,
     name: String,
     lines: Vec<String>,
+}
+
+#[derive(Deserialize, Serialize, sqlx::Type)]
+pub struct SongNames {
+    #[serde(default)]
+    id: i32,
+    name: String,
 }
 
 #[derive(Deserialize)]
@@ -34,19 +45,50 @@ pub async fn add_song(State(state): State<Store>, Form(song): Form<FormSong>) ->
 
     println!("{:?}", lines);
 
-    if let Err(e) = sqlx::query!(
+    let lines_comp = lines.iter().map(|line| LineComp {
+        line: line.clone(),
+        ..Default::default()
+    });
+
+    let id = match sqlx::query!(
         r#"
-        INSERT INTO Song (name, lines)
-        VALUES ($1, $2)
+        INSERT INTO Song (name)
+        VALUES ($1)
+        RETURNING id
         "#,
         song.name,
-        &lines
     )
-    .execute(pool.as_ref())
+    .fetch_one(pool.as_ref())
     .await
     {
-        tracing::error!("Failed to insert song: {:?}", e);
-        return "Failed to insert song";
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("Failed to insert song: {:?}", e);
+            return "Failed to insert song";
+        }
+    };
+
+    for comp in lines_comp {
+        if let Err(e) = sqlx::query(
+            r#"
+            INSERT INTO Lines(
+                line,
+                position,
+                cam_look_at,
+                song_id
+            ) VALUES ($1, $2, $3, $4)
+            "#,
+        )
+        .bind(comp.line)
+        .bind(Vector::from(comp.position))
+        .bind(Vector::from(comp.cam_look_at))
+        .bind(id.id)
+        .execute(pool.as_ref())
+        .await
+        {
+            tracing::error!("Failed to insert song: {:?}", e);
+            return "Failed to insert song";
+        }
     }
 
     "Hello, World!"
@@ -57,6 +99,12 @@ pub struct SongRequest {
     id: i32,
 }
 
+pub struct DbSong {
+    id: i32,
+    name: String,
+    lines: Option<Vec<String>>,
+}
+
 pub async fn get_song(
     State(state): State<Store>,
     Query(song): Query<SongRequest>,
@@ -64,9 +112,15 @@ pub async fn get_song(
     let pool = state.pool;
 
     let song = match sqlx::query_as!(
-        Song,
+        DbSong,
         r#"
-        SELECT * FROM Song
+        SELECT id, name, ARRAY(
+            SELECT line
+            FROM Lines
+            WHERE song_id = $1
+            ORDER BY id
+        ) AS lines
+        FROM Song
         WHERE id = $1
         "#,
         song.id
@@ -81,14 +135,22 @@ pub async fn get_song(
         }
     };
 
+    let song = Song {
+        id: song.id,
+        name: song.name,
+        lines: song.lines.unwrap_or_default(),
+    };
+
     Ok(Json(song))
 }
 
-pub async fn get_all_songs(State(state): State<Store>) -> Result<Json<Vec<Song>>, &'static str> {
+pub async fn get_all_songs(
+    State(state): State<Store>,
+) -> Result<Json<Vec<SongNames>>, &'static str> {
     let pool = state.pool;
 
     let songs = match sqlx::query_as!(
-        Song,
+        SongNames,
         r#"
         SELECT * FROM Song
         "#,
@@ -142,9 +204,13 @@ pub async fn set_active_song(
 
     let lines = if let Ok(v) = query!(
         r#"
-        SELECT lines
-        FROM Song
-        WHERE id = $1
+        SELECT ARRAY(
+            SELECT line
+            FROM Lines
+            WHERE song_id = $1
+            ORDER BY id
+        )
+        AS lines
         "#,
         song.id
     )
@@ -156,7 +222,7 @@ pub async fn set_active_song(
         return StatusCode::INTERNAL_SERVER_ERROR;
     };
 
-    let load_song = LoadSong::from(lines);
+    let load_song = LoadSong::from(lines.unwrap());
 
     let _ = state.load_song_ch.send(load_song);
 
@@ -177,9 +243,15 @@ pub async fn next_line(
     let mut active_song = state.active_song.write().await;
 
     let song = match sqlx::query_as!(
-        Song,
+        DbSong,
         r#"
-        SELECT * FROM Song
+        SELECT id, name, ARRAY(
+            SELECT line
+            FROM Lines
+            WHERE song_id = $1
+            ORDER BY id
+        ) AS lines
+        FROM Song
         WHERE id = $1
         "#,
         active_song.id
@@ -187,7 +259,11 @@ pub async fn next_line(
     .fetch_one(pool.as_ref())
     .await
     {
-        Ok(song) => song,
+        Ok(song) => Song {
+            id: song.id,
+            name: song.name,
+            lines: song.lines.unwrap_or_default(),
+        },
         Err(e) => {
             tracing::error!("Failed to fetch song: {:?}", e);
             return StatusCode::INTERNAL_SERVER_ERROR;
