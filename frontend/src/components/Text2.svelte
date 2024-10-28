@@ -1,6 +1,7 @@
 <script lang="ts">
   import { T, useTask, useThrelte } from "@threlte/core";
   import { Text3DGeometry, Suspense } from "@threlte/extras";
+  import { onMount } from "svelte";
   import { Vector3 } from "three/src/math/Vector3.js";
 
   interface Props {
@@ -33,7 +34,7 @@
   let alt_text = $state("Hello\nWorld");
   let flip = $state(false);
 
-  $effect(() => {
+  onMount(() => {
     ev = new EventSource(`${base}/sse`);
 
     ev.onmessage = (e) => {
@@ -46,6 +47,10 @@
         target.y = -19;
         flip = !flip;
       }
+    };
+
+    return () => {
+      ev.close();
     };
   });
 

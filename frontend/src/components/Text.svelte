@@ -2,6 +2,7 @@
   import type { LoadSong } from "$lib/bindings/LoadSong";
   import { T, useTask, useThrelte } from "@threlte/core";
   import { Text3DGeometry, Suspense, Grid, Sky } from "@threlte/extras";
+  import { onMount } from "svelte";
   import { Vector3 } from "three/src/math/Vector3.js";
 
   interface Props {
@@ -36,7 +37,7 @@
   let active_line: number | null = $state(null);
   let prev_line: number | null = $state(null);
 
-  $effect(() => {
+  onMount(() => {
     ev_load = new EventSource(`${base}/load`);
     ev_index = new EventSource(`${base}/line`);
 
@@ -61,6 +62,11 @@
       } else {
         active_line = null;
       }
+    };
+
+    return () => {
+      ev_load.close();
+      ev_index.close();
     };
   });
 

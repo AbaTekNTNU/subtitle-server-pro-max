@@ -13,5 +13,10 @@ export default defineConfig({
   adapter: node({
     mode: "standalone",
   }),
-  integrations: [tailwind(), svelte()],
+  integrations: [
+    tailwind({
+      applyBaseStyles: false,
+    }),
+    svelte(),
+  ],
 });

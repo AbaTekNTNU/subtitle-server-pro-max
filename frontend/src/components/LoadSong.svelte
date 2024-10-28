@@ -1,10 +1,10 @@
 <script lang="ts">
   import Button from "./ui/button/button.svelte";
 
-  interface Props {
+  type Props = {
     base: string;
     id: number;
-  }
+  };
 
   const { base, id }: Props = $props();
 </script>
@@ -16,7 +16,7 @@
         "Content-Type": "application/json",
       },
       method: "POST",
-      body: JSON.stringify({ id: id }),
+      body: JSON.stringify({ id: Number(id) }),
     });
   }}>Load Song</Button
 >

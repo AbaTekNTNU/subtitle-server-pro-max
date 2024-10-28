@@ -10,7 +10,7 @@
     <Button
       variant="outline"
       class="w-44 rounded-lg p-4"
-      on:click={() => {
+      onclick={() => {
         window.location.href = `/song/${song.id}`;
         fetch(`${base}/song/set`, {
           headers: {
