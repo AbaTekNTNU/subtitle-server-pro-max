@@ -11,14 +11,16 @@ path = "src/main.rs"
 async-stream = "0.3.6"
 axum = { version = "0.7.7", features = ["http2"] }
 axum-extra = { version = "0.9.4", features = ["typed-header"] }
+deadpool-diesel = { version = "0.6.1", features = ["postgres"] }
+diesel = { version = "2.2.4", features = ["postgres"] }
+diesel_migrations = { version = "2.2.0", features = ["postgres"] }
 dotenvy = "0.15.7"
 futures = "0.3.31"
 futures-util = "0.3.31"
-pgvector = { version = "0.4", features = ["postgres", "sqlx"] }
+pgvector = { version = "0.4", features = ["postgres", "diesel"] }
 rand = "0.8.5"
-serde = { version = "1.0.210", features = ["derive"] }
-sqlx = { version = "0.8.2", features = ["postgres", "runtime-tokio-rustls"] }
-tokio = { version = "1.40.0", features = ["full"] }
+serde = { version = "1.0.214", features = ["derive"] }
+tokio = { version = "1.41.0", features = ["full"] }
 tokio-stream = "0.1.16"
 tower-http = { version = "0.6.1", features = ["cors"] }
 tracing = "0.1.40"

@@ -1,4 +1,7 @@
-use std::{env, sync::Arc};
+use std::{
+    fmt::{Display, Formatter},
+    sync::Arc,
+};
 
 use axum::{
     http::Method,
@@ -6,13 +9,15 @@ use axum::{
     Router,
 };
 use controller::{add_song, get_all_songs, get_song, next_line, reset_line, set_active_song};
-use sqlx::postgres::PgPoolOptions;
+use deadpool_diesel::{Manager, Pool};
+use diesel::prelude::*;
 use sse::{sse_handler_active_line, sse_handler_lines, sse_load_song, sse_scene_ready};
 use tokio::sync::{broadcast, RwLock};
 use tower_http::cors::{Any, CorsLayer};
 use types::LoadSong;
 
 mod controller;
+pub mod schema;
 mod sse;
 mod types;
 
@@ -22,14 +27,20 @@ struct ActiveSong {
     line: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct Store {
     line_ch: Arc<broadcast::Sender<String>>,
     index_ch: Arc<broadcast::Sender<Option<u32>>>,
     load_song_ch: Arc<broadcast::Sender<LoadSong>>,
     scene_ready: Arc<broadcast::Sender<bool>>,
-    pool: Arc<sqlx::PgPool>,
+    pool: Arc<Pool<Manager<PgConnection>>>,
     active_song: Arc<RwLock<ActiveSong>>,
+}
+
+impl Display for Store {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Store")
+    }
 }
 
 #[tokio::main]
@@ -37,7 +48,7 @@ async fn main() {
     // initialize tracing
     tracing_subscriber::fmt::init();
 
-    // load environment variables from .env file
+    // load environment variables from `.env` file
     dotenvy::dotenv().ok();
 
     let (tx, _) = broadcast::channel::<String>(16);
@@ -45,10 +56,13 @@ async fn main() {
     let (song_tx, _) = broadcast::channel::<LoadSong>(16);
     let (scene_tx, _) = broadcast::channel::<bool>(16);
 
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&env::var("DATABASE_URL").unwrap())
-        .await
+    let db_url = std::env::var("DATABASE_URL").unwrap();
+
+    // set up connection pool
+    let manager = deadpool_diesel::postgres::Manager::new(db_url, deadpool_diesel::Runtime::Tokio1);
+    let pool = deadpool_diesel::postgres::Pool::builder(manager)
+        .max_size(16)
+        .build()
         .unwrap();
 
     let active_song = ActiveSong::default();
