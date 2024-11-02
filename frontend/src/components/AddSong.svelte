@@ -2,11 +2,15 @@
   import { Button } from "./ui/button";
   import { Textarea } from "./ui/textarea";
   import { Input } from "./ui/input";
+  import { toast } from "svelte-sonner";
+  type Props = {
+    base: string;
+  };
 
   let form: HTMLFormElement;
-  export let base: string;
+  const { base }: Props = $props();
 
-  const handleSubmit = (e: Event) => {
+  const handleSubmit = async (e: Event) => {
     e.preventDefault();
 
     const formData = new FormData(form);
@@ -16,12 +20,15 @@
       data.append(key, value as string);
     }
 
-    fetch(form.action, {
+    const res = await fetch(form.action, {
       method: form.method,
       body: data,
-    }).catch((error) => {
-      console.error("Error:", error);
     });
+
+    if (res.ok) {
+      toast.success("Song added successfully");
+      form.reset();
+    }
   };
 </script>
 
@@ -29,7 +36,7 @@
   method="post"
   action="{base}/song"
   class="flex w-full flex-col items-center gap-2"
-  on:submit|preventDefault={handleSubmit}
+  onsubmit={handleSubmit}
   bind:this={form}
 >
   <label for="name">Name:</label>
@@ -39,6 +46,6 @@
     <label for="lines" class="self-start">Lines:</label>
     <Textarea id="lines" name="lines" class="h-96 w-full" />
 
-    <Button on:click={handleSubmit} class="self-start">Add Song</Button>
+    <Button onclick={handleSubmit} class="self-start">Add Song</Button>
   </div>
 </form>

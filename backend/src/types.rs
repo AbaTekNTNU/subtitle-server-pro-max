@@ -3,7 +3,6 @@ use diesel::{
     Selectable,
 };
 use pgvector::Vector;
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -33,7 +32,7 @@ pub struct LineComp {
     pub cam_look_at: Vector3,
     pub cam_position: Vector3,
     pub color: Option<Color>,
-    pub keep_n_last: Vec<Option<i32>>,
+    pub keep_n_last: i32,
 
     // Animation values
     pub end_position: Option<Vector3>,
@@ -51,7 +50,7 @@ pub struct DbLineComp {
     pub position: Vector,
     pub cam_position: Vector,
     pub cam_look_at: Vector,
-    pub keep_n_last: Vec<Option<i32>>,
+    pub keep_n_last: i32,
 
     pub end_position: Option<Vector>,
     pub cam_end_position: Option<Vector>,
@@ -67,7 +66,7 @@ pub struct NewDbLineComp {
     pub position: Vector,
     pub cam_position: Vector,
     pub cam_look_at: Vector,
-    pub keep_n_last: Vec<Option<i32>>,
+    pub keep_n_last: i32,
     pub end_position: Option<Vector>,
     pub cam_end_position: Option<Vector>,
     pub cam_end_look_at: Option<Vector>,
@@ -106,22 +105,12 @@ impl From<LineComp> for NewDbLineComp {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, TS)]
+#[derive(Debug, Default, Deserialize, Serialize, Clone, TS)]
 #[ts(export)]
 pub struct Vector3 {
-    x: f32,
-    y: f32,
-    z: f32,
-}
-
-impl Default for Vector3 {
-    fn default() -> Self {
-        Self {
-            x: rand::thread_rng().gen_range(-40..40) as f32,
-            y: rand::thread_rng().gen_range(1..50) as f32,
-            z: rand::thread_rng().gen_range(-25..25) as f32,
-        }
-    }
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }
 
 impl From<Vector3> for pgvector::Vector {

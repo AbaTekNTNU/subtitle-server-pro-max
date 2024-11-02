@@ -11,11 +11,11 @@ use diesel::{
 };
 use pgvector::Vector;
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use tracing::{error, info};
 
 use crate::{
     schema::{self, song},
-    types::{DbLineComp, LineComp, LoadSong, NewDbLineComp},
+    types::{DbLineComp, LineComp, LoadSong, NewDbLineComp, Vector3},
     Store,
 };
 
@@ -43,6 +43,11 @@ pub async fn add_song(State(state): State<Store>, Form(song): Form<FormSong>) ->
 
     let comps = lines_comp.into_iter().map(|line| LineComp {
         line: line.clone(),
+        cam_position: Vector3 {
+            x: 0.0,
+            y: 10.0,
+            z: 150.0,
+        },
         ..Default::default()
     });
 
@@ -62,7 +67,7 @@ pub async fn add_song(State(state): State<Store>, Form(song): Form<FormSong>) ->
                         song_id,
                         position: val.position.into(),
                         end_position: None,
-                        keep_n_last: vec![],
+                        keep_n_last: 0,
                         cam_position: val.cam_position.into(),
                         cam_look_at: val.cam_look_at.into(),
                         cam_end_position: None,
@@ -268,6 +273,7 @@ pub async fn edit_song(State(store): State<Store>, Json(body): Json<LineComp>) -
                     line.eq(body.line),
                     position.eq::<Vector>(body.position.into()),
                     cam_position.eq::<Vector>(body.cam_position.into()),
+                    keep_n_last.eq(body.keep_n_last),
                 ))
                 .execute(con)?;
 
@@ -276,6 +282,7 @@ pub async fn edit_song(State(store): State<Store>, Json(body): Json<LineComp>) -
         .await;
 
     if res.is_err() {
+        error!("Failed to update song with id: {}", body.id);
         return StatusCode::INTERNAL_SERVER_ERROR;
     }
 

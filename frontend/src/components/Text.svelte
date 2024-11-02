@@ -15,19 +15,33 @@
   let target: Vector3 = $state(new Vector3(0, 1, 0));
 
   let cam_pos: Vector3 = $state(new Vector3(0, 10, 150));
+  let cam_pos_target: Vector3 = $state(new Vector3(0, 10, 150));
 
   useTask((delta) => {
-    if (Math.abs(target.y - lookAt.y) > 0.01) {
-      lookAt.y = lookAt.y + (target.y - lookAt.y) * delta * 5;
-      camera.current.lookAt(lookAt);
-    }
     if (Math.abs(target.x - lookAt.x) > 0.01) {
       lookAt.x = lookAt.x + (target.x - lookAt.x) * delta * 2;
+      camera.current.lookAt(lookAt);
+    }
+    if (Math.abs(target.y - lookAt.y) > 0.01) {
+      lookAt.y = lookAt.y + (target.y - lookAt.y) * delta * 5;
       camera.current.lookAt(lookAt);
     }
     if (Math.abs(target.z - lookAt.z) > 0.01) {
       lookAt.z = lookAt.z + (target.z - lookAt.z) * delta * 2;
       camera.current.lookAt(lookAt);
+    }
+
+    if (Math.abs(cam_pos_target.x - cam_pos.x) > 0.01) {
+      cam_pos.x = cam_pos.x + (cam_pos_target.x - cam_pos.x) * delta * 2;
+      camera.current.position.x = cam_pos.x;
+    }
+    if (Math.abs(cam_pos_target.y - cam_pos.y) > 0.01) {
+      cam_pos.y = cam_pos.y + (cam_pos_target.y - cam_pos.y) * delta * 5;
+      camera.current.position.y = cam_pos.y;
+    }
+    if (Math.abs(cam_pos_target.z - cam_pos.z) > 0.01) {
+      cam_pos.z = cam_pos.z + (cam_pos_target.z - cam_pos.z) * delta * 2;
+      camera.current.position.z = cam_pos.z;
     }
   });
 
@@ -35,6 +49,8 @@
   let ev_load: EventSource;
   let ev_index: EventSource;
   let active_line: number | null = $state(null);
+
+  let visible_lines: number[] = $state([]);
   let prev_line: number | null = $state(null);
 
   onMount(() => {
@@ -58,6 +74,15 @@
           target.x = song.lines[active_line].position.x;
           target.y = song.lines[active_line].position.y;
           target.z = song.lines[active_line].position.z;
+
+          cam_pos_target.x = song.lines[active_line].cam_position.x;
+          cam_pos_target.y = song.lines[active_line].cam_position.y;
+          cam_pos_target.z = song.lines[active_line].cam_position.z;
+
+          visible_lines = [];
+          for (let i = 1; i <= song.lines[active_line].keep_n_last; i++) {
+            visible_lines.push(active_line - i);
+          }
         }
       } else {
         active_line = null;
@@ -111,7 +136,7 @@
       <T.Mesh
         position={[-15 + line.position.x, line.position.y, line.position.z]}
         scale={0.02}
-        visible={index === active_line || index === prev_line}
+        visible={index === active_line || visible_lines.includes(index)}
       >
         <Text3DGeometry
           text={line.line}

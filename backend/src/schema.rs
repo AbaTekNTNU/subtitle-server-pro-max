@@ -25,7 +25,7 @@ diesel::table! {
         position -> Vector,
         cam_position -> Vector,
         cam_look_at -> Vector,
-        keep_n_last -> Array<Nullable<Int4>>,
+        keep_n_last -> Int4,
         end_position -> Nullable<Vector>,
         cam_end_position -> Nullable<Vector>,
         cam_end_look_at -> Nullable<Vector>,

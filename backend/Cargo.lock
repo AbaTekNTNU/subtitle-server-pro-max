@@ -154,7 +154,6 @@ dependencies = [
  "futures",
  "futures-util",
  "pgvector",
- "rand",
  "serde",
  "tokio",
  "tokio-stream",

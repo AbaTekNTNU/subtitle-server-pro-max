@@ -23,7 +23,7 @@
     const cam_look_at = textToVector(form.cam_look_at.value);
     const color = form.color.value === "" ? null : form.color.value;
     const keep_n_last =
-      form.keep_n_last.value === "" ? [] : form.keep_n_last.value;
+      form.keep_n_last.value === "" ? 0 : form.keep_n_last.value;
     const end_position = textToVector(form.end_position.value);
     const cam_end_position = textToVector(form.cam_end_position.value);
     const cam_end_look_at = textToVector(form.cam_end_look_at.value);
@@ -31,11 +31,11 @@
     const comp: LineComp = {
       id: Number(id),
       line: form.line.value,
-      position: position,
-      cam_position: cam_position,
-      cam_look_at: cam_look_at,
+      position: position!,
+      cam_position: cam_position!,
+      cam_look_at: cam_look_at!,
       color: color ?? null,
-      keep_n_last: keep_n_last ?? null,
+      keep_n_last: keep_n_last ? Number(keep_n_last) : 0,
       end_position: end_position ?? null,
       cam_end_position: cam_end_position ?? null,
       cam_end_look_at: cam_end_look_at ?? null,
@@ -108,7 +108,7 @@
                 />
               </div>
               <div class="grid grid-cols-4 items-center gap-4">
-                <Label for="cam_look_at" class="text-right">Cam position</Label>
+                <Label for="cam_look_at" class="text-right">Cam look at</Label>
                 <Input
                   id="cam_look_at"
                   type="text"
