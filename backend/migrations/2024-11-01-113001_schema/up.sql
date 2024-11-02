@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS lines (
   position VECTOR(3) NOT NULL,
   cam_position VECTOR(3) NOT NULL,
   cam_look_at VECTOR(3) NOT NULL,
+  keep_n_last int[] NOT NULL check (array_position(keep_n_last, null) is null),
 
   end_position VECTOR(3),
   cam_end_position VECTOR(3),

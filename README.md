@@ -18,6 +18,7 @@
 - pnpm
 - node
 - Docker
+- Diesel CLI
 
 ### Backend
 
@@ -29,6 +30,7 @@ DATABSE_URL=<path/to/db>
 
 ```sh
 docker compose up db
+diesel migration run
 cargo run
 ```
 

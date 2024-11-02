@@ -6,14 +6,15 @@ use axum::{
 use diesel::{
     dsl::exists,
     prelude::Queryable,
-    query_dsl::methods::{FilterDsl, SelectDsl},
+    query_dsl::methods::{FilterDsl, OrderDsl, SelectDsl},
     select, Connection, ExpressionMethods, RunQueryDsl, Selectable,
 };
+use pgvector::Vector;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
 use crate::{
-    schema::song,
+    schema::{self, song},
     types::{DbLineComp, LineComp, LoadSong, NewDbLineComp},
     Store,
 };
@@ -61,6 +62,7 @@ pub async fn add_song(State(state): State<Store>, Form(song): Form<FormSong>) ->
                         song_id,
                         position: val.position.into(),
                         end_position: None,
+                        keep_n_last: vec![],
                         cam_position: val.cam_position.into(),
                         cam_look_at: val.cam_look_at.into(),
                         cam_end_position: None,
@@ -94,7 +96,12 @@ pub async fn get_song(
     let pool = state.pool.get().await.unwrap();
 
     let line_res = pool
-        .interact(move |con| lines.filter(song_id.eq(song.id)).load::<DbLineComp>(con))
+        .interact(move |con| {
+            lines
+                .filter(song_id.eq(song.id))
+                .order(id.asc())
+                .load::<DbLineComp>(con)
+        })
         .await
         .unwrap()
         .unwrap()
@@ -102,9 +109,8 @@ pub async fn get_song(
         .map(LineComp::from)
         .collect::<Vec<_>>();
 
-    println!("{:?}", line_res);
-
     let song = LoadSong {
+        id: song.id,
         title: "Test".to_string(),
         lines: line_res,
     };
@@ -159,18 +165,24 @@ pub async fn set_active_song(
     active_song.line = 0;
 
     let lines_res = pool
-        .interact(move |con| lines.filter(song_id.eq(table_id_2)).load::<DbLineComp>(con))
+        .interact(move |con| {
+            lines
+                .filter(song_id.eq(table_id_2))
+                .order(schema::lines::id.asc())
+                .load::<DbLineComp>(con)
+        })
         .await
         .unwrap()
-        .unwrap();
+        .unwrap()
+        .into_iter()
+        .map(LineComp::from)
+        .collect::<Vec<_>>();
 
-    let load_song = LoadSong::from(
-        lines_res
-            .into_iter()
-            .map(|line_comp| line_comp.line)
-            .collect::<Vec<_>>(),
-    );
-
+    let load_song = LoadSong {
+        id: 0,
+        title: "Don't care".to_string(),
+        lines: lines_res,
+    };
     let _ = state.load_song_ch.send(load_song);
 
     StatusCode::OK
@@ -198,6 +210,7 @@ pub async fn next_line(
             lines
                 .filter(song_id.eq(song_id_comp))
                 .select(line)
+                .order(id.asc())
                 .load::<String>(con)
         })
         .await
@@ -239,6 +252,34 @@ pub async fn reset_line(State(state): State<Store>) -> StatusCode {
     let _ = state.index_ch.send(None);
 
     state.active_song.write().await.line = 0;
+
+    StatusCode::OK
+}
+
+pub async fn edit_song(State(store): State<Store>, Json(body): Json<LineComp>) -> StatusCode {
+    let pool = store.pool.get().await.unwrap();
+
+    use super::schema::lines::dsl::*;
+
+    let res = pool
+        .interact(move |con| {
+            let _ = diesel::update(lines.filter(id.eq(body.id)))
+                .set((
+                    line.eq(body.line),
+                    position.eq::<Vector>(body.position.into()),
+                    cam_position.eq::<Vector>(body.cam_position.into()),
+                ))
+                .execute(con)?;
+
+            diesel::result::QueryResult::Ok(())
+        })
+        .await;
+
+    if res.is_err() {
+        return StatusCode::INTERNAL_SERVER_ERROR;
+    }
+
+    info!("Updated song with id: {}", body.id);
 
     StatusCode::OK
 }

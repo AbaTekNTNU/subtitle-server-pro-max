@@ -1,10 +1,10 @@
 use diesel::{
-    prelude::{Associations, Insertable, Queryable},
+    prelude::{AsChangeset, Associations, Insertable, Queryable},
     Selectable,
 };
 use pgvector::Vector;
 use rand::Rng;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::schema::{lines, song};
@@ -12,6 +12,7 @@ use crate::schema::{lines, song};
 #[derive(Debug, Serialize, Clone, Default, TS)]
 #[ts(export)]
 pub struct LoadSong {
+    pub id: i32,
     pub title: String,
     pub lines: Vec<LineComp>,
 }
@@ -23,14 +24,16 @@ pub struct DbLoadSong {
     pub name: String,
 }
 
-#[derive(Debug, Serialize, Clone, Default, TS)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, TS)]
 #[ts(export)]
 pub struct LineComp {
+    pub id: i32,
     pub line: String,
     pub position: Vector3,
     pub cam_look_at: Vector3,
     pub cam_position: Vector3,
     pub color: Option<Color>,
+    pub keep_n_last: Vec<Option<i32>>,
 
     // Animation values
     pub end_position: Option<Vector3>,
@@ -48,12 +51,14 @@ pub struct DbLineComp {
     pub position: Vector,
     pub cam_position: Vector,
     pub cam_look_at: Vector,
+    pub keep_n_last: Vec<Option<i32>>,
+
     pub end_position: Option<Vector>,
     pub cam_end_position: Option<Vector>,
     pub cam_end_look_at: Option<Vector>,
 }
 
-#[derive(Debug, Insertable, Associations)]
+#[derive(Debug, Insertable, Associations, AsChangeset)]
 #[diesel(table_name = lines)]
 #[diesel(belongs_to(LoadSong, foreign_key = song_id))]
 pub struct NewDbLineComp {
@@ -62,6 +67,7 @@ pub struct NewDbLineComp {
     pub position: Vector,
     pub cam_position: Vector,
     pub cam_look_at: Vector,
+    pub keep_n_last: Vec<Option<i32>>,
     pub end_position: Option<Vector>,
     pub cam_end_position: Option<Vector>,
     pub cam_end_look_at: Option<Vector>,
@@ -70,11 +76,13 @@ pub struct NewDbLineComp {
 impl From<DbLineComp> for LineComp {
     fn from(value: DbLineComp) -> Self {
         LineComp {
+            id: value.id,
             line: value.line,
             position: value.position.into(),
             cam_look_at: value.cam_look_at.into(),
             cam_position: value.cam_position.into(),
             end_position: value.end_position.map(|v| v.into()),
+            keep_n_last: value.keep_n_last,
             cam_end_position: value.cam_end_position.map(|v| v.into()),
             cam_end_look_at: value.cam_end_look_at.map(|v| v.into()),
             color: None,
@@ -90,6 +98,7 @@ impl From<LineComp> for NewDbLineComp {
             position: value.position.into(),
             cam_look_at: value.cam_look_at.into(),
             cam_position: value.cam_position.into(),
+            keep_n_last: value.keep_n_last,
             end_position: value.end_position.map(|v| v.into()),
             cam_end_position: value.cam_end_position.map(|v| v.into()),
             cam_end_look_at: value.cam_end_look_at.map(|v| v.into()),
@@ -97,7 +106,7 @@ impl From<LineComp> for NewDbLineComp {
     }
 }
 
-#[derive(Debug, Serialize, Clone, TS)]
+#[derive(Debug, Deserialize, Serialize, Clone, TS)]
 #[ts(export)]
 pub struct Vector3 {
     x: f32,
@@ -132,15 +141,16 @@ impl From<Vector> for Vector3 {
     }
 }
 
-#[derive(Debug, Serialize, Clone, Default, TS)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, TS)]
 #[ts(export)]
 pub struct Color {
-    color: [&'static str; 6],
+    color: String,
 }
 
 impl From<Vec<String>> for LoadSong {
     fn from(value: Vec<String>) -> Self {
         LoadSong {
+            id: 0,
             title: "Undefined".to_string(),
             lines: value.into_iter().map(LineComp::from).collect(),
         }

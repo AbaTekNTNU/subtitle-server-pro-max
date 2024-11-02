@@ -1,11 +1,11 @@
 ---
 import Songs from "$lib/components/Songs.svelte";
 import Layout from "$lib/layouts/Layout.astro";
-import type { Song } from "$lib/types";
+import type { SongName } from "$lib/bindings/SongName";
 
 const url = import.meta.env.PUBLIC_BACKEND_URL;
 
-const songs: Song[] = await fetch(`${url}/songs`)
+const songs: SongName[] = await fetch(`${url}/songs`)
   .then((res) => res.json())
   .catch((err) => console.error(err));
 ---

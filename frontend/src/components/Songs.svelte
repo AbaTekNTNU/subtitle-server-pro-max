@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { Song } from "../types";
+  import type { SongName } from "$lib/bindings/SongName";
   import { Button } from "./ui/button";
   import Icon from "@iconify/svelte";
 
-  const { songs, base }: { songs: Song[]; base: string } = $props();
+  const { songs, base }: { songs: SongName[]; base: string } = $props();
 </script>
 
 <div class="flex w-full flex-col items-center gap-2">
