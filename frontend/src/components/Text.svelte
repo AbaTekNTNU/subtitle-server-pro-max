@@ -5,6 +5,13 @@
   import { onMount } from "svelte";
   import { cubicInOut, cubicOut } from "svelte/easing";
   import { tweened } from "svelte/motion";
+  import type {
+    BufferGeometry,
+    Material,
+    Mesh,
+    NormalBufferAttributes,
+    Object3DEventMap,
+  } from "three";
   import { FontLoader } from "three/examples/jsm/Addons.js";
   import { DEG2RAD } from "three/src/math/MathUtils.js";
   import { Vector3 } from "three/src/math/Vector3.js";
@@ -12,6 +19,8 @@
   interface Props {
     base: string;
   }
+  const { base }: Props = $props();
+  let { camera } = useThrelte();
 
   const cameraPosition = tweened(
     { x: 0, y: 10, z: 150 },
@@ -31,11 +40,6 @@
     },
   );
 
-  const { base }: Props = $props();
-  let { camera } = useThrelte();
-
-  const font = useLoader(FontLoader).load("/font.json");
-
   const lookAtAnimation = tweened(
     {
       x: 0,
@@ -48,6 +52,14 @@
       easing: cubicOut,
     },
   );
+
+  let refs: Mesh<
+    BufferGeometry<NormalBufferAttributes>,
+    Material | Material[],
+    Object3DEventMap
+  >[] = $state([]);
+
+  const font = useLoader(FontLoader).load("/font.json");
 
   let target: Vector3 = $state(new Vector3(0, 1, 0));
   let cam_pos: Vector3 = $state(new Vector3(0, 10, 150));
@@ -106,9 +118,6 @@
             z: song.lines[active_line].cam_rotation?.z || 0,
           });
 
-          // Log rotation
-          console.log("rotation", song.lines[active_line].cam_rotation);
-
           visible_lines = [];
           for (let i = 1; i <= song.lines[active_line].keep_n_last; i++) {
             visible_lines.push(active_line - i);
@@ -128,7 +137,6 @@
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === "Enter") {
       target.x = 10;
-      console.log("target", target);
     } else if (e.key === "Escape") {
       target.x = -10;
     }
@@ -147,15 +155,6 @@
       makeDefault
       position={[cam_pos.x, cam_pos.y, cam_pos.z]}
       fov={15}
-      oncreate={(cam) => {
-        cam.lookAt(
-          new Vector3(
-            $lookAtAnimation.x,
-            $lookAtAnimation.y,
-            $lookAtAnimation.z,
-          ),
-        );
-      }}
     ></T.PerspectiveCamera>
   </T.Group>
   <Sky elevation={0.5} />
@@ -175,6 +174,9 @@
     {#each song.lines as line, index}
       <Suspense>
         <T.Mesh
+          oncreate={(ref) => {
+            refs = [...refs, ref];
+          }}
           position={[
             centerText(line.position.x, line.line.length),
             line.position.y,

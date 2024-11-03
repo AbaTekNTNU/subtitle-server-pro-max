@@ -46,8 +46,4 @@ diesel::table! {
 
 diesel::joinable!(lines -> song (song_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    _sqlx_migrations,
-    lines,
-    song,
-);
+diesel::allow_tables_to_appear_in_same_query!(_sqlx_migrations, lines, song,);

@@ -4,7 +4,8 @@ use std::{
 };
 
 use axum::{
-    http::Method,
+    extract::MatchedPath,
+    http::{Method, Request},
     routing::{delete, get, post, put},
     Router,
 };
@@ -16,7 +17,11 @@ use deadpool_diesel::{Manager, Pool};
 use diesel::prelude::*;
 use sse::{sse_handler_active_line, sse_handler_lines, sse_load_song, sse_scene_ready};
 use tokio::sync::{broadcast, RwLock};
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::{
+    cors::{Any, CorsLayer},
+    trace::TraceLayer,
+};
+use tracing::info_span;
 use types::LoadSong;
 
 mod controller;
@@ -106,6 +111,21 @@ async fn main() {
         .route("/reset", post(reset_line))
         .nest("/", sse_router)
         .layer(cors_layer)
+        .layer(
+            TraceLayer::new_for_http().make_span_with(|req: &Request<_>| {
+                let matched_path = req
+                    .extensions()
+                    .get::<MatchedPath>()
+                    .map(MatchedPath::as_str);
+
+                info_span!(
+                    "http_request",
+                    method = ?req.method(),
+                    matched_path,
+                    some_other_field = tracing::field::Empty,
+                )
+            }),
+        )
         .with_state(state);
 
     // run our app with hyper, listening globally on port 3000
