@@ -33,6 +33,8 @@ pub struct LineComp {
     pub cam_position: Vector3,
     pub color: Option<Color>,
     pub keep_n_last: i32,
+    pub rotation: Option<Vector3>,
+    pub cam_rotation: Option<Vector3>,
 
     // Animation values
     pub end_position: Option<Vector3>,
@@ -51,6 +53,8 @@ pub struct DbLineComp {
     pub cam_position: Vector,
     pub cam_look_at: Vector,
     pub keep_n_last: i32,
+    pub rotation: Option<Vector>,
+    pub cam_rotation: Option<Vector>,
 
     pub end_position: Option<Vector>,
     pub cam_end_position: Option<Vector>,
@@ -85,6 +89,8 @@ impl From<DbLineComp> for LineComp {
             cam_end_position: value.cam_end_position.map(|v| v.into()),
             cam_end_look_at: value.cam_end_look_at.map(|v| v.into()),
             color: None,
+            rotation: value.rotation.map(|v| v.into()),
+            cam_rotation: value.cam_rotation.map(|v| v.into()),
         }
     }
 }

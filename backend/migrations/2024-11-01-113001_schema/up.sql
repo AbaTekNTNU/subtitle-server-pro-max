@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS lines (
   cam_look_at VECTOR(3) NOT NULL,
   keep_n_last int NOT NULL DEFAULT 0,
 
+  rotation VECTOR(3),
+  cam_rotation VECTOR(3),
   end_position VECTOR(3),
   cam_end_position VECTOR(3),
   cam_end_look_at VECTOR(3),

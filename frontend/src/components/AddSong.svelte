@@ -28,6 +28,8 @@
     if (res.ok) {
       toast.success("Song added successfully");
       form.reset();
+    } else {
+      toast.error("Failed to add song");
     }
   };
 </script>

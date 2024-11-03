@@ -275,6 +275,8 @@ pub async fn edit_song(State(store): State<Store>, Json(body): Json<LineComp>) -
                     cam_position.eq::<Vector>(body.cam_position.into()),
                     keep_n_last.eq(body.keep_n_last),
                     cam_look_at.eq::<Vector>(body.cam_look_at.into()),
+                    rotation.eq::<Option<Vector>>(body.rotation.map(|v| v.into())),
+                    cam_rotation.eq::<Option<Vector>>(body.cam_rotation.map(|v| v.into())),
                 ))
                 .execute(con)?;
 

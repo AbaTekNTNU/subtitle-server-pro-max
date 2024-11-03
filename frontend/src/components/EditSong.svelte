@@ -34,11 +34,13 @@
       position: position!,
       cam_position: cam_position!,
       cam_look_at: cam_look_at!,
+      rotation: textToVector(form.rotation.value),
       color: color ?? null,
       keep_n_last: keep_n_last ? Number(keep_n_last) : 0,
       end_position: end_position ?? null,
       cam_end_position: cam_end_position ?? null,
       cam_end_look_at: cam_end_look_at ?? null,
+      cam_rotation: textToVector(form.camera_rotation.value),
     };
 
     console.log(comp);
@@ -134,6 +136,30 @@
                   id="cam_look_at"
                   type="text"
                   value={`${line.cam_look_at.x} ${line.cam_look_at.y} ${line.cam_look_at.z}`}
+                  class="col-span-3"
+                />
+              </div>
+              <div class="grid grid-cols-4 items-center gap-4">
+                <Label for="rotation" class="text-right">rotation</Label>
+                <Input
+                  id="rotation"
+                  type="text"
+                  value={line.rotation
+                    ? `${line.rotation.x} ${line.rotation.y} ${line.rotation.z}`
+                    : "null"}
+                  class="col-span-3"
+                />
+              </div>
+              <div class="grid grid-cols-4 items-center gap-4">
+                <Label for="camera_rotation" class="text-right"
+                  >Camera rotation</Label
+                >
+                <Input
+                  id="camera_rotation"
+                  type="text"
+                  value={line.cam_rotation
+                    ? `${line.cam_rotation.x} ${line.cam_rotation.y} ${line.cam_rotation.z}`
+                    : "null"}
                   class="col-span-3"
                 />
               </div>

@@ -1,39 +1,51 @@
 <script lang="ts">
   import type { LoadSong } from "$lib/bindings/LoadSong";
-  import { T, useTask, useThrelte } from "@threlte/core";
+  import { T, useTask, useThrelte, useLoader } from "@threlte/core";
   import { Text3DGeometry, Suspense, Grid, Sky } from "@threlte/extras";
   import { onMount } from "svelte";
+  import { cubicInOut, cubicOut } from "svelte/easing";
   import { tweened } from "svelte/motion";
+  import { FontLoader } from "three/examples/jsm/Addons.js";
+  import { DEG2RAD } from "three/src/math/MathUtils.js";
   import { Vector3 } from "three/src/math/Vector3.js";
 
   interface Props {
     base: string;
   }
 
-  const cameraSpring = tweened(
+  const cameraPosition = tweened(
     { x: 0, y: 10, z: 150 },
     {
-      duration: 200,
+      duration: 250,
       delay: 0,
+      easing: cubicInOut,
+    },
+  );
+
+  const cameraRotation = tweened(
+    { x: 0, y: 0, z: 0 },
+    {
+      duration: 250,
+      delay: 0,
+      easing: cubicInOut,
     },
   );
 
   const { base }: Props = $props();
   let { camera } = useThrelte();
 
-  camera.current.position.x = $cameraSpring.x;
-  camera.current.position.y = $cameraSpring.y;
-  camera.current.position.z = $cameraSpring.z;
+  const font = useLoader(FontLoader).load("/font.json");
 
-  const lookAtTween = tweened(
+  const lookAtAnimation = tweened(
     {
       x: 0,
       y: 1,
       z: 0,
     },
     {
-      duration: 200,
+      duration: 250,
       delay: 0,
+      easing: cubicOut,
     },
   );
 
@@ -42,12 +54,16 @@
 
   useTask(() => {
     camera.current.lookAt(
-      new Vector3($lookAtTween.x, $lookAtTween.y, $lookAtTween.z),
+      new Vector3($lookAtAnimation.x, $lookAtAnimation.y, $lookAtAnimation.z),
     );
 
-    camera.current.position.x = $cameraSpring.x;
-    camera.current.position.y = $cameraSpring.y;
-    camera.current.position.z = $cameraSpring.z;
+    camera.current.position.x = $cameraPosition.x;
+    camera.current.position.y = $cameraPosition.y;
+    camera.current.position.z = $cameraPosition.z;
+
+    camera.current.rotation.x = $cameraRotation.x * DEG2RAD;
+    camera.current.rotation.y = $cameraRotation.y * DEG2RAD;
+    camera.current.rotation.z = $cameraRotation.z * DEG2RAD;
   });
 
   let song: LoadSong | null = $state(null);
@@ -72,17 +88,26 @@
         active_line = parseInt(data) - 1;
 
         if (song) {
-          lookAtTween.set({
+          lookAtAnimation.set({
             x: song.lines[active_line].cam_look_at.x,
             y: song.lines[active_line].cam_look_at.y,
             z: song.lines[active_line].cam_look_at.z,
           });
 
-          cameraSpring.set({
+          cameraPosition.set({
             x: song.lines[active_line].cam_position.x,
             y: song.lines[active_line].cam_position.y,
             z: song.lines[active_line].cam_position.z,
           });
+
+          cameraRotation.set({
+            x: song.lines[active_line].cam_rotation?.x || 0,
+            y: song.lines[active_line].cam_rotation?.y || 0,
+            z: song.lines[active_line].cam_rotation?.z || 0,
+          });
+
+          // Log rotation
+          console.log("rotation", song.lines[active_line].cam_rotation);
 
           visible_lines = [];
           for (let i = 1; i <= song.lines[active_line].keep_n_last; i++) {
@@ -123,7 +148,13 @@
       position={[cam_pos.x, cam_pos.y, cam_pos.z]}
       fov={15}
       oncreate={(cam) => {
-        cam.lookAt(new Vector3($lookAtTween.x, $lookAtTween.y, $lookAtTween.z));
+        cam.lookAt(
+          new Vector3(
+            $lookAtAnimation.x,
+            $lookAtAnimation.y,
+            $lookAtAnimation.z,
+          ),
+        );
       }}
     ></T.PerspectiveCamera>
   </T.Group>
@@ -132,7 +163,6 @@
   <T.DirectionalLight position={[10, 10, 10]} castShadow />
 
   <Grid
-    position.y={-0.001}
     cellColor="#ffffff"
     sectionColor="#ffffff"
     sectionThickness={0}
@@ -150,11 +180,16 @@
             line.position.y,
             line.position.z,
           ]}
+          rotation={[
+            line.rotation ? line.rotation.x * DEG2RAD : 0,
+            line.rotation ? line.rotation.y * DEG2RAD : 0,
+            line.rotation ? line.rotation.z * DEG2RAD : 0,
+          ]}
           scale={0.02}
           visible={index === active_line || visible_lines.includes(index)}
         >
           <Text3DGeometry
-            font={"/font.json"}
+            font={$font}
             text={line.line}
             bevelEnabled
             bevelSize={1}

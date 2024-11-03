@@ -26,6 +26,8 @@ diesel::table! {
         cam_position -> Vector,
         cam_look_at -> Vector,
         keep_n_last -> Int4,
+        rotation -> Nullable<Vector>,
+        cam_rotation -> Nullable<Vector>,
         end_position -> Nullable<Vector>,
         cam_end_position -> Nullable<Vector>,
         cam_end_look_at -> Nullable<Vector>,

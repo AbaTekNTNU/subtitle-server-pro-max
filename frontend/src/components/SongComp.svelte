@@ -77,6 +77,18 @@
     }
   };
 
+  const handleMousePress = (index: number) => {
+    fetch(`${base}/song/next`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        skips: index + 1 - (active_line ? active_line + 1 : 0),
+      }),
+    });
+  };
+
   let active_line: number | null = $state(null);
 
   let ev: EventSource;
@@ -130,7 +142,10 @@
       {:else}
         <div class="flex justify-center gap-2">
           <p>{index + 1}.</p>
-          <p class="h-6 text-center">{line}</p>
+          <button
+            class="h-6 text-center"
+            onclick={() => handleMousePress(index)}>{line}</button
+          >
         </div>
       {/if}
     {/each}
