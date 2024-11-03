@@ -5,11 +5,12 @@ use std::{
 
 use axum::{
     http::Method,
-    routing::{get, post, put},
+    routing::{delete, get, post, put},
     Router,
 };
 use controller::{
-    add_song, edit_song, get_all_songs, get_song, next_line, reset_line, set_active_song,
+    add_song, delete_line, edit_song, get_all_songs, get_song, next_line, reset_line,
+    set_active_song,
 };
 use deadpool_diesel::{Manager, Pool};
 use diesel::prelude::*;
@@ -80,7 +81,7 @@ async fn main() {
 
     let cors_layer = CorsLayer::new()
         // allow `GET` and `POST` when accessing the resource
-        .allow_methods([Method::GET, Method::POST, Method::PUT])
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
         .allow_headers(Any)
         // allow requests from any origin
         .allow_origin(Any);
@@ -100,6 +101,7 @@ async fn main() {
         .route("/song/edit", put(edit_song))
         .route("/song/set", post(set_active_song))
         .route("/song/next", post(next_line))
+        .route("/song/edit", delete(delete_line))
         .route("/songs", get(get_all_songs))
         .route("/reset", post(reset_line))
         .nest("/", sse_router)

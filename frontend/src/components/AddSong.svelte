@@ -40,11 +40,21 @@
   bind:this={form}
 >
   <label for="name">Name:</label>
-  <Input type="text" id="name" name="name" required class="w-1/3" />
+  <Input
+    type="text"
+    id="name"
+    name="name"
+    required
+    class="w-1/3 bg-primary-foreground"
+  />
 
   <div class="flex w-1/2 flex-col items-center">
     <label for="lines" class="self-start">Lines:</label>
-    <Textarea id="lines" name="lines" class="h-96 w-full" />
+    <Textarea
+      id="lines"
+      name="lines"
+      class="h-96 w-full bg-primary-foreground"
+    />
 
     <Button onclick={handleSubmit} class="self-start">Add Song</Button>
   </div>

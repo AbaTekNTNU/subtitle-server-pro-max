@@ -5,7 +5,7 @@
   import * as Dialog from "./ui/dialog";
   import { Input } from "./ui/input";
   import { Label } from "./ui/label";
-  import { textToVector } from "$lib/utils";
+  import { cn, textToVector } from "$lib/utils";
 
   type Props = {
     lines: LineComp[];
@@ -58,14 +58,35 @@
       console.error("error");
     }
   };
+
+  const deleteLine = async (id: number) => {
+    const res = await fetch(`${url}/song/edit`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: id }),
+    });
+
+    if (res.ok) {
+      console.log("success");
+      location.reload();
+    } else {
+      console.error("error");
+    }
+  };
 </script>
 
-<div class="flex w-full flex-col items-center gap-1">
+<div class="flex w-full flex-col items-center gap-1 pb-24">
   {#each lines as line}
-    <div class="grid grid-cols-4 items-center gap-2">
-      <p class="col-span-3 text-right">{line.line}</p>
+    <div class="grid w-1/2 grid-cols-4 items-center gap-2">
       <Dialog.Root>
-        <Dialog.Trigger class={buttonVariants({ variant: "outline" })}>
+        <Dialog.Trigger
+          class={cn(
+            buttonVariants({ variant: "outline", size: "icon" }),
+            "col-span-1 justify-self-end",
+          )}
+        >
           <Icon icon="akar-icons:edit" class="scale-150" />
         </Dialog.Trigger>
         <Dialog.Content class="sm:max-w-[425px]">
@@ -167,12 +188,18 @@
                 />
               </div>
             </div>
-            <Dialog.Footer>
+            <Dialog.Footer class="flex w-full justify-around">
+              <Button
+                type="button"
+                variant="outline"
+                onclick={() => deleteLine(line.id)}>Delete</Button
+              >
               <Button type="submit">Save changes</Button>
             </Dialog.Footer>
           </form>
         </Dialog.Content>
       </Dialog.Root>
+      <p class="col-span-3 text-left">{line.line}</p>
     </div>
   {/each}
 </div>

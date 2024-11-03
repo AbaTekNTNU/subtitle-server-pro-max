@@ -268,12 +268,13 @@ pub async fn edit_song(State(store): State<Store>, Json(body): Json<LineComp>) -
 
     let res = pool
         .interact(move |con| {
-            let _ = diesel::update(lines.filter(id.eq(body.id)))
+            diesel::update(lines.filter(id.eq(body.id)))
                 .set((
                     line.eq(body.line),
                     position.eq::<Vector>(body.position.into()),
                     cam_position.eq::<Vector>(body.cam_position.into()),
                     keep_n_last.eq(body.keep_n_last),
+                    cam_look_at.eq::<Vector>(body.cam_look_at.into()),
                 ))
                 .execute(con)?;
 
@@ -287,6 +288,34 @@ pub async fn edit_song(State(store): State<Store>, Json(body): Json<LineComp>) -
     }
 
     info!("Updated song with id: {}", body.id);
+
+    StatusCode::OK
+}
+
+#[derive(Deserialize)]
+pub struct DeleteLine {
+    id: i32,
+}
+
+pub async fn delete_line(State(store): State<Store>, Json(body): Json<DeleteLine>) -> StatusCode {
+    let pool = store.pool.get().await.unwrap();
+
+    use super::schema::lines::dsl::*;
+
+    let res = pool
+        .interact(move |con| {
+            diesel::delete(lines.filter(id.eq(body.id))).execute(con)?;
+
+            diesel::result::QueryResult::Ok(())
+        })
+        .await;
+
+    if res.is_err() {
+        error!("Failed to delete song with id: {}", body.id);
+        return StatusCode::INTERNAL_SERVER_ERROR;
+    }
+
+    info!("Deleted song with id: {}", body.id);
 
     StatusCode::OK
 }
