@@ -187,7 +187,9 @@
                 <Input
                   id="end_position"
                   type="text"
-                  value={`${line.end_position}`}
+                  value={line.end_position
+                    ? `${line.end_position.x} ${line.end_position.y} ${line.end_position.z}`
+                    : "null"}
                   class="col-span-3"
                 />
               </div>

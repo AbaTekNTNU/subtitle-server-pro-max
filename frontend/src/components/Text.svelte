@@ -53,6 +53,17 @@
     },
   );
 
+  let animateText = $state(
+    tweened(
+      {
+        x: 0,
+        y: 0,
+        z: 0,
+      },
+      { duration: 1000, delay: 0 },
+    ),
+  );
+
   let refs: Mesh<
     BufferGeometry<NormalBufferAttributes>,
     Material | Material[],
@@ -76,8 +87,17 @@
     camera.current.rotation.x = $cameraRotation.x * DEG2RAD;
     camera.current.rotation.y = $cameraRotation.y * DEG2RAD;
     camera.current.rotation.z = $cameraRotation.z * DEG2RAD;
+
+    if (animate) {
+      console.log(refs[active_line ?? 0].position);
+
+      refs[active_line ?? 0].position.x = $animateText.x;
+      refs[active_line ?? 0].position.y = $animateText.y;
+      refs[active_line ?? 0].position.z = $animateText.z;
+    }
   });
 
+  let animate = $state(false);
   let song: LoadSong | null = $state(null);
   let ev_load: EventSource;
   let ev_index: EventSource;
@@ -117,6 +137,32 @@
             y: song.lines[active_line].cam_rotation?.y || 0,
             z: song.lines[active_line].cam_rotation?.z || 0,
           });
+
+          if (song.lines[active_line].end_position) {
+            animateText = tweened(
+              {
+                x: centerText(
+                  song.lines[active_line].position.x,
+                  song.lines[active_line].line.length,
+                ),
+                y: song.lines[active_line].position.y,
+                z: song.lines[active_line].position.z,
+              },
+              { duration: 1000, delay: 0, easing: cubicInOut },
+            );
+
+            animateText.set({
+              x: centerText(
+                song.lines[active_line].end_position!.x,
+                song.lines[active_line].line.length,
+              ),
+              y: song.lines[active_line].end_position!.y,
+              z: song.lines[active_line].end_position!.z,
+            });
+            animate = true;
+          } else {
+            animate = false;
+          }
 
           visible_lines = [];
           for (let i = 1; i <= song.lines[active_line].keep_n_last; i++) {
