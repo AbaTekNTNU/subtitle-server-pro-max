@@ -1,5 +1,11 @@
 // @generated automatically by Diesel CLI.
 
+pub mod sql_types {
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "animation"))]
+    pub struct Animation;
+}
+
 diesel::table! {
     use diesel::sql_types::*;
     use pgvector::sql_types::*;
@@ -17,6 +23,7 @@ diesel::table! {
 diesel::table! {
     use diesel::sql_types::*;
     use pgvector::sql_types::*;
+    use super::sql_types::Animation;
 
     lines (id) {
         id -> Int4,
@@ -24,9 +31,12 @@ diesel::table! {
         song_id -> Int4,
         position -> Vector,
         cam_position -> Vector,
+        cam_position_duration -> Nullable<Int4>,
         cam_look_at -> Vector,
         keep_n_last -> Int4,
         rotation -> Nullable<Vector>,
+        text_animation -> Nullable<Animation>,
+        text_position_duration -> Nullable<Int4>,
         cam_rotation -> Nullable<Vector>,
         end_position -> Nullable<Vector>,
         cam_end_position -> Nullable<Vector>,
@@ -46,4 +56,8 @@ diesel::table! {
 
 diesel::joinable!(lines -> song (song_id));
 
-diesel::allow_tables_to_appear_in_same_query!(_sqlx_migrations, lines, song,);
+diesel::allow_tables_to_appear_in_same_query!(
+    _sqlx_migrations,
+    lines,
+    song,
+);

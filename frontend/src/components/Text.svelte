@@ -1,20 +1,23 @@
 <script lang="ts">
   import type { LoadSong } from "$lib/bindings/LoadSong";
+  import { animateConversion } from "$lib/utils";
   import { T, useTask, useThrelte, useLoader } from "@threlte/core";
   import { Text3DGeometry, Suspense, Grid, Sky } from "@threlte/extras";
   import { onMount } from "svelte";
   import { cubicInOut, cubicOut } from "svelte/easing";
   import { tweened } from "svelte/motion";
-  import type {
-    BufferGeometry,
-    Material,
+  import {
     Mesh,
-    NormalBufferAttributes,
-    Object3DEventMap,
+    type BufferGeometry,
+    type Material,
+    type NormalBufferAttributes,
+    type Object3DEventMap,
   } from "three";
-  import { FontLoader } from "three/examples/jsm/Addons.js";
+  import { FontLoader, GLTFLoader } from "three/examples/jsm/Addons.js";
   import { DEG2RAD } from "three/src/math/MathUtils.js";
   import { Vector3 } from "three/src/math/Vector3.js";
+
+  const gltf = useLoader(GLTFLoader).load("abakua.glb");
 
   interface Props {
     base: string;
@@ -30,6 +33,8 @@
       easing: cubicInOut,
     },
   );
+
+  let cowRotate = $state(0);
 
   const cameraRotation = tweened(
     { x: 0, y: 0, z: 0 },
@@ -60,7 +65,7 @@
         y: 0,
         z: 0,
       },
-      { duration: 1000, delay: 0 },
+      { duration: 1000, delay: 0, easing: cubicOut },
     ),
   );
 
@@ -75,7 +80,7 @@
   let target: Vector3 = $state(new Vector3(0, 1, 0));
   let cam_pos: Vector3 = $state(new Vector3(0, 10, 150));
 
-  useTask(() => {
+  useTask((delta) => {
     camera.current.lookAt(
       new Vector3($lookAtAnimation.x, $lookAtAnimation.y, $lookAtAnimation.z),
     );
@@ -95,6 +100,8 @@
       refs[active_line ?? 0].position.y = $animateText.y;
       refs[active_line ?? 0].position.z = $animateText.z;
     }
+
+    cowRotate += 0.1;
   });
 
   let animate = $state(false);
@@ -148,7 +155,13 @@
                 y: song.lines[active_line].position.y,
                 z: song.lines[active_line].position.z,
               },
-              { duration: 1000, delay: 0, easing: cubicInOut },
+              {
+                duration: 1000,
+                delay: 0,
+                easing: animateConversion(
+                  song.lines[active_line].text_animation,
+                ),
+              },
             );
 
             animateText.set({
@@ -195,57 +208,65 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-{#if song}
-  <T.Group>
-    <T.PerspectiveCamera
-      makeDefault
-      position={[cam_pos.x, cam_pos.y, cam_pos.z]}
-      fov={15}
-    ></T.PerspectiveCamera>
-  </T.Group>
-  <Sky elevation={0.5} />
+<T.Group>
+  <T.PerspectiveCamera
+    makeDefault
+    position={[cam_pos.x, cam_pos.y, cam_pos.z]}
+    fov={15}
+  ></T.PerspectiveCamera>
+</T.Group>
+<Sky elevation={0.5} />
 
-  <T.DirectionalLight position={[10, 10, 10]} castShadow />
+<T.DirectionalLight position={[10, 10, 10]} castShadow />
 
-  <Grid
-    cellColor="#ffffff"
-    sectionColor="#ffffff"
-    sectionThickness={0}
-    gridSize={1000}
-    fadeDistance={250}
-    cellSize={2}
+<Grid
+  cellColor="#ffffff"
+  sectionColor="#ffffff"
+  sectionThickness={0}
+  gridSize={1000}
+  fadeDistance={250}
+  cellSize={2}
+/>
+
+{#if $gltf}
+  <T
+    is={$gltf.scene}
+    scale={1000}
+    position={[0, 15, -20]}
+    rotation={[20 * DEG2RAD, -10 * DEG2RAD, 0]}
   />
+{/if}
 
-  {#if song}
-    {#each song.lines as line, index}
-      <Suspense>
-        <T.Mesh
-          oncreate={(ref) => {
-            refs = [...refs, ref];
-          }}
-          position={[
-            centerText(line.position.x, line.line.length),
-            line.position.y,
-            line.position.z,
-          ]}
-          rotation={[
-            line.rotation ? line.rotation.x * DEG2RAD : 0,
-            line.rotation ? line.rotation.y * DEG2RAD : 0,
-            line.rotation ? line.rotation.z * DEG2RAD : 0,
-          ]}
-          scale={0.02}
-          visible={index === active_line || visible_lines.includes(index)}
-        >
-          <Text3DGeometry
-            font={$font}
-            text={line.line}
-            bevelEnabled
-            bevelSize={1}
-            bevelSegments={20}
-            curveSegments={12}
-          />
-          <T.MeshStandardMaterial color="#FD3F00" />
-        </T.Mesh>
-      </Suspense>
-    {/each}
-  {/if}{/if}
+{#if song}
+  {#each song.lines as line, index}
+    <Suspense>
+      <T.Mesh
+        oncreate={(ref: Mesh) => {
+          refs = [...refs, ref];
+        }}
+        position={[
+          centerText(line.position.x, line.line.length),
+          line.position.y,
+          line.position.z,
+        ]}
+        rotation={[
+          line.rotation ? line.rotation.x * DEG2RAD : 0,
+          line.rotation ? line.rotation.y * DEG2RAD : 0,
+          line.rotation ? line.rotation.z * DEG2RAD : 0,
+        ]}
+        scale={0.02}
+        visible={index === active_line || visible_lines.includes(index)}
+      >
+        <Text3DGeometry
+          font={$font}
+          text={line.line}
+          bevelEnabled
+          bevelSize={1}
+          bevelSegments={20}
+          curveSegments={12}
+        />
+        <T.MeshStandardMaterial color="#FD3F00" />
+      </T.Mesh>
+    </Suspense>
+  {/each}
+{/if}

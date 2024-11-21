@@ -1,5 +1,5 @@
 use diesel::{
-    prelude::{AsChangeset, Associations, Insertable, Queryable},
+    prelude::{AsChangeset, Associations, Identifiable, Insertable, Queryable},
     Selectable,
 };
 use pgvector::Vector;
@@ -16,7 +16,7 @@ pub struct LoadSong {
     pub lines: Vec<LineComp>,
 }
 
-#[derive(Debug, Queryable, Selectable)]
+#[derive(Debug, Queryable, Selectable, PartialEq, Identifiable)]
 #[diesel(table_name = song)]
 pub struct DbLoadSong {
     pub id: i32,
@@ -31,18 +31,20 @@ pub struct LineComp {
     pub position: Vector3,
     pub cam_look_at: Vector3,
     pub cam_position: Vector3,
-    pub color: Option<Color>,
+    pub cam_position_duration: Option<i32>,
+    pub cam_end_position: Option<Vector3>,
+    pub color: Option<String>,
     pub keep_n_last: i32,
     pub rotation: Option<Vector3>,
     pub cam_rotation: Option<Vector3>,
 
     // Animation values
+    pub text_animation: Option<AnimationType>,
     pub end_position: Option<Vector3>,
-    pub cam_end_position: Option<Vector3>,
     pub cam_end_look_at: Option<Vector3>,
 }
 
-#[derive(Debug, Queryable, Selectable, Associations)]
+#[derive(Debug, Queryable, Selectable, Associations, Identifiable)]
 #[diesel(table_name = lines)]
 #[diesel(belongs_to(DbLoadSong, foreign_key = song_id))]
 pub struct DbLineComp {
@@ -51,12 +53,14 @@ pub struct DbLineComp {
     pub song_id: i32,
     pub position: Vector,
     pub cam_position: Vector,
+    pub cam_position_duration: Option<i32>,
     pub cam_look_at: Vector,
     pub keep_n_last: i32,
     pub rotation: Option<Vector>,
     pub cam_rotation: Option<Vector>,
 
     pub end_position: Option<Vector>,
+    pub text_animation: Option<AnimationType>,
     pub cam_end_position: Option<Vector>,
     pub cam_end_look_at: Option<Vector>,
 }
@@ -86,6 +90,8 @@ impl From<DbLineComp> for LineComp {
             cam_position: value.cam_position.into(),
             end_position: value.end_position.map(|v| v.into()),
             keep_n_last: value.keep_n_last,
+            text_animation: value.text_animation,
+            cam_position_duration: value.cam_position_duration,
             cam_end_position: value.cam_end_position.map(|v| v.into()),
             cam_end_look_at: value.cam_end_look_at.map(|v| v.into()),
             color: None,
@@ -93,6 +99,14 @@ impl From<DbLineComp> for LineComp {
             cam_rotation: value.cam_rotation.map(|v| v.into()),
         }
     }
+}
+
+#[derive(Debug, diesel_derive_enum::DbEnum, Serialize, Deserialize, Clone, TS)]
+#[ExistingTypePath = "crate::schema::sql_types::Animation"]
+pub enum AnimationType {
+    In,
+    Out,
+    InOut,
 }
 
 impl From<LineComp> for NewDbLineComp {
@@ -134,12 +148,6 @@ impl From<Vector> for Vector3 {
             z: val[2],
         }
     }
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, Default, TS)]
-#[ts(export)]
-pub struct Color {
-    color: String,
 }
 
 impl From<Vec<String>> for LoadSong {

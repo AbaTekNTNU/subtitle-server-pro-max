@@ -41,6 +41,7 @@
       cam_end_position: cam_end_position ?? null,
       cam_end_look_at: cam_end_look_at ?? null,
       cam_rotation: textToVector(form.camera_rotation.value),
+      text_animation: null,
     };
 
     console.log(comp);

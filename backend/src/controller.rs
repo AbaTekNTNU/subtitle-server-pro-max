@@ -4,18 +4,16 @@ use axum::{
     Form, Json,
 };
 use diesel::{
-    dsl::exists,
-    prelude::Queryable,
-    query_dsl::methods::{FilterDsl, OrderDsl, SelectDsl},
-    select, Connection, ExpressionMethods, RunQueryDsl, Selectable,
+    dsl::exists, select, BelongingToDsl, Connection, ExpressionMethods, QueryDsl, Queryable,
+    RunQueryDsl, Selectable, SelectableHelper,
 };
 use pgvector::Vector;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
 use crate::{
-    schema::{self, song},
-    types::{DbLineComp, LineComp, LoadSong, NewDbLineComp, Vector3},
+    schema::*,
+    types::{DbLineComp, DbLoadSong, LineComp, LoadSong, NewDbLineComp, Vector3},
     Store,
 };
 
@@ -95,32 +93,34 @@ pub struct SongRequest {
 
 pub async fn get_song(
     State(state): State<Store>,
-    Query(song): Query<SongRequest>,
+    Query(song_req): Query<SongRequest>,
 ) -> Result<Json<LoadSong>, &'static str> {
-    use super::schema::lines::dsl::*;
     let pool = state.pool.get().await.unwrap();
 
-    let line_res = pool
+    let query_song = pool
         .interact(move |con| {
-            lines
-                .filter(song_id.eq(song.id))
-                .order(id.asc())
-                .load::<DbLineComp>(con)
+            let song_join = song::table
+                .find(song_req.id)
+                .select(DbLoadSong::as_select())
+                .get_result(con)
+                .unwrap();
+
+            let line_res: Vec<DbLineComp> = DbLineComp::belonging_to(&song_join)
+                .order(lines::id.asc())
+                .select(DbLineComp::as_select())
+                .load(con)
+                .unwrap();
+
+            (song_join, line_res)
         })
         .await
-        .unwrap()
-        .unwrap()
-        .into_iter()
-        .map(LineComp::from)
-        .collect::<Vec<_>>();
+        .unwrap();
 
-    let song = LoadSong {
-        id: song.id,
-        title: "Test".to_string(),
-        lines: line_res,
-    };
-
-    Ok(Json(song))
+    Ok(Json(LoadSong {
+        id: query_song.0.id,
+        title: query_song.0.name,
+        lines: query_song.1.into_iter().map(LineComp::from).collect(),
+    }))
 }
 
 pub async fn get_all_songs(
@@ -143,10 +143,7 @@ pub async fn set_active_song(
     State(state): State<Store>,
     Json(song_req): Json<SongRequest>,
 ) -> StatusCode {
-    info!("Setting active song to: {:?}", song);
-
-    use super::schema::lines::dsl::*;
-    use super::schema::song::dsl::*;
+    info!("Setting active song to: {:?}", song_req);
 
     let pool = state.pool.get().await.unwrap();
 
@@ -155,7 +152,7 @@ pub async fn set_active_song(
 
     let res = pool
         .interact(move |con| {
-            select(exists(song.filter(self::song::dsl::id.eq(table_id)))).get_result::<bool>(con)
+            select(exists(song::table.filter(song::id.eq(table_id)))).get_result::<bool>(con)
         })
         .await
         .unwrap()
@@ -171,10 +168,11 @@ pub async fn set_active_song(
 
     let lines_res = pool
         .interact(move |con| {
-            lines
-                .filter(song_id.eq(table_id_2))
-                .order(schema::lines::id.asc())
-                .load::<DbLineComp>(con)
+            lines::table
+                .select(DbLineComp::as_select())
+                .filter(lines::song_id.eq(table_id_2))
+                .order(lines::id.asc())
+                .load(con)
         })
         .await
         .unwrap()
