@@ -9,11 +9,13 @@
   import { toast } from "svelte-sonner";
 
   type Props = {
-    lines: LineComp[];
+    lines_import: LineComp[];
     url: string;
   };
 
-  const { lines, url }: Props = $props();
+  const { lines_import, url }: Props = $props();
+
+  let lines = $state(lines_import);
 
   let current_line = $state(lines[0]);
 
@@ -64,6 +66,7 @@
     if (res.ok) {
       console.log("success");
       toast.success("Line updated");
+      lines[lines.findIndex((line) => line.id === Number(id))] = comp;
       await fetchLines(Number(id));
     } else {
       console.error("error");

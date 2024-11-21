@@ -233,7 +233,7 @@
     is={$gltf.scene}
     scale={1000}
     position={[0, 15, -20]}
-    rotation={[5  * DEG2RAD, -10  * DEG2RAD, 0]}
+    rotation={[5 * DEG2RAD, -10 * DEG2RAD, 0]}
   />
 {/if}
 
