@@ -15,10 +15,10 @@ const lines = song.lines;
 ---
 
 <Layout title={song.title}>
-  <main class="flex h-screen w-full flex-col items-start p-4">
+  <main class="flex h-dvh w-full flex-col items-start">
     <a
       href="/allsongs"
-      class="sticky top-4 rounded-md bg-primary p-2 px-4 text-primary-foreground"
+      class="absolute top-4 rounded-md bg-primary p-2 px-4 text-primary-foreground"
       >Back</a
     >
     <EditSong client:load lines={lines} url={url} />

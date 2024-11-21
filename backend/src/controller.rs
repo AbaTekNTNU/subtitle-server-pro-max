@@ -320,3 +320,25 @@ pub async fn delete_line(State(store): State<Store>, Json(body): Json<DeleteLine
 
     StatusCode::OK
 }
+
+pub async fn get_line(
+    State(store): State<Store>,
+    Query(body): Query<DeleteLine>,
+) -> Result<Json<LineComp>, (StatusCode, &'static str)> {
+    let pool = store.pool.get().await.unwrap();
+
+    let res = pool
+        .interact(move |con| {
+            lines::table
+                .select(DbLineComp::as_select())
+                .filter(lines::id.eq(body.id))
+                .first(con)
+        })
+        .await
+        .unwrap();
+
+    match res {
+        Ok(val) => Ok(Json(LineComp::from(val))),
+        Err(_) => Err((StatusCode::NOT_FOUND, "Failed to find line")),
+    }
+}

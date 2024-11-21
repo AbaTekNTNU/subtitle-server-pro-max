@@ -10,7 +10,7 @@ use axum::{
     Router,
 };
 use controller::{
-    add_song, delete_line, edit_song, get_all_songs, get_song, next_line, reset_line,
+    add_song, delete_line, edit_song, get_all_songs, get_line, get_song, next_line, reset_line,
     set_active_song,
 };
 use deadpool_diesel::{Manager, Pool};
@@ -101,14 +101,15 @@ async fn main() {
 
     // build our application with a route
     let app = Router::new()
-        .route("/song", post(add_song))
-        .route("/song", get(get_song))
-        .route("/song/edit", put(edit_song))
-        .route("/song/set", post(set_active_song))
-        .route("/song/next", post(next_line))
-        .route("/song/edit", delete(delete_line))
-        .route("/songs", get(get_all_songs))
+        .route("/edit/line", get(get_line))
         .route("/reset", post(reset_line))
+        .route("/song", get(get_song))
+        .route("/song", post(add_song))
+        .route("/song/edit", delete(delete_line))
+        .route("/song/edit", put(edit_song))
+        .route("/song/next", post(next_line))
+        .route("/song/set", post(set_active_song))
+        .route("/songs", get(get_all_songs))
         .nest("/", sse_router)
         .layer(cors_layer)
         .layer(
