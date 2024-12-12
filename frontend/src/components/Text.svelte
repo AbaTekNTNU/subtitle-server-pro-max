@@ -5,7 +5,7 @@
   import { Text3DGeometry, Suspense, Grid, Sky } from "@threlte/extras";
   import { onMount } from "svelte";
   import { cubicInOut, cubicOut } from "svelte/easing";
-  import { tweened } from "svelte/motion";
+  import { Tween } from "svelte/motion";
   import {
     Mesh,
     type BufferGeometry,
@@ -25,7 +25,7 @@
   const { base }: Props = $props();
   let { camera } = useThrelte();
 
-  const cameraPosition = tweened(
+  const cameraPosition = new Tween(
     { x: 0, y: 10, z: 150 },
     {
       duration: 250,
@@ -36,7 +36,7 @@
 
   let cowRotate = $state(0);
 
-  const cameraRotation = tweened(
+  const cameraRotation = new Tween(
     { x: 0, y: 0, z: 0 },
     {
       duration: 250,
@@ -45,7 +45,7 @@
     },
   );
 
-  const lookAtAnimation = tweened(
+  const lookAtAnimation = new Tween(
     {
       x: 0,
       y: 1,
@@ -59,7 +59,7 @@
   );
 
   let animateText = $state(
-    tweened(
+    new Tween(
       {
         x: 0,
         y: 0,
@@ -80,25 +80,29 @@
   let target: Vector3 = $state(new Vector3(0, 1, 0));
   let cam_pos: Vector3 = $state(new Vector3(0, 10, 150));
 
-  useTask((delta) => {
+  useTask((_delta) => {
     camera.current.lookAt(
-      new Vector3($lookAtAnimation.x, $lookAtAnimation.y, $lookAtAnimation.z),
+      new Vector3(
+        lookAtAnimation.current.x,
+        lookAtAnimation.current.y,
+        lookAtAnimation.current.z,
+      ),
     );
 
-    camera.current.position.x = $cameraPosition.x;
-    camera.current.position.y = $cameraPosition.y;
-    camera.current.position.z = $cameraPosition.z;
+    camera.current.position.x = cameraPosition.current.x;
+    camera.current.position.y = cameraPosition.current.y;
+    camera.current.position.z = cameraPosition.current.z;
 
-    camera.current.rotation.x = $cameraRotation.x * DEG2RAD;
-    camera.current.rotation.y = $cameraRotation.y * DEG2RAD;
-    camera.current.rotation.z = $cameraRotation.z * DEG2RAD;
+    camera.current.rotation.x = cameraRotation.current.x * DEG2RAD;
+    camera.current.rotation.y = cameraRotation.current.y * DEG2RAD;
+    camera.current.rotation.z = cameraRotation.current.z * DEG2RAD;
 
     if (animate) {
       console.log(refs[active_line ?? 0].position);
 
-      refs[active_line ?? 0].position.x = $animateText.x;
-      refs[active_line ?? 0].position.y = $animateText.y;
-      refs[active_line ?? 0].position.z = $animateText.z;
+      refs[active_line ?? 0].position.x = animateText.current.x;
+      refs[active_line ?? 0].position.y = animateText.current.y;
+      refs[active_line ?? 0].position.z = animateText.current.z;
     }
 
     cowRotate += 0.1;
@@ -146,7 +150,7 @@
           });
 
           if (song.lines[active_line].end_position) {
-            animateText = tweened(
+            animateText = new Tween(
               {
                 x: centerText(
                   song.lines[active_line].position.x,
