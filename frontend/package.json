@@ -12,36 +12,36 @@
   "dependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/node": "^8.3.4",
-    "@astrojs/svelte": "^5.7.3",
+    "@astrojs/svelte": "^6.0.2",
     "@astrojs/tailwind": "^5.1.2",
     "@threlte/core": "8.0.0-next.31",
-    "@threlte/extras": "9.0.0-next.39",
-    "astro": "^4.16.13",
+    "@threlte/extras": "9.0.0-next.42",
+    "astro": "^4.16.16",
     "lucide-svelte": "^0.454.0",
-    "svelte": "^5.2.7",
+    "svelte": "^5.3.1",
     "tailwindcss": "^3.4.15",
-    "three": "^0.169.0",
-    "typescript": "^5.6.3"
+    "three": "^0.170.0",
+    "typescript": "^5.7.2"
   },
   "devDependencies": {
-    "@iconify/json": "^2.2.274",
+    "@iconify/json": "^2.2.278",
     "@iconify/svelte": "^4.0.2",
-    "@sveltejs/vite-plugin-svelte": "^4.0.1",
+    "@sveltejs/vite-plugin-svelte": "^4.0.2",
     "@types/three": "^0.169.0",
     "bits-ui": "1.0.0-next.36",
     "clsx": "^2.1.1",
     "mode-watcher": "^0.4.1",
-    "prettier": "^3.3.3",
+    "prettier": "^3.4.1",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-organize-imports": "^4.1.0",
-    "prettier-plugin-svelte": "^3.2.8",
+    "prettier-plugin-svelte": "^3.3.2",
     "prettier-plugin-tailwindcss": "^0.6.9",
     "svelte-radix": "^2.0.1",
     "svelte-sonner": "^0.3.28",
-    "tailwind-merge": "^2.5.4",
+    "tailwind-merge": "^2.5.5",
     "tailwind-variants": "^0.2.1",
     "tailwindcss-animate": "^1.0.7",
-    "unplugin-icons": "^0.20.1"
+    "unplugin-icons": "^0.20.2"
   },
   "overrides": {
     "@sveltejs/vite-plugin-svelte": "^4.0.0"
