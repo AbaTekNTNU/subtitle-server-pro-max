@@ -61,6 +61,7 @@ pub struct DbLineComp {
 
     pub end_position: Option<Vector>,
     pub text_animation: Option<AnimationType>,
+    pub text_position_duration: Option<i32>,
     pub cam_end_position: Option<Vector>,
     pub cam_end_look_at: Option<Vector>,
 }

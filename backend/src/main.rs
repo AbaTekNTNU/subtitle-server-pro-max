@@ -110,7 +110,7 @@ async fn main() {
         .route("/song/next", post(next_line))
         .route("/song/set", post(set_active_song))
         .route("/songs", get(get_all_songs))
-        .nest("/", sse_router)
+        .merge(sse_router)
         .layer(cors_layer)
         .layer(
             TraceLayer::new_for_http().make_span_with(|req: &Request<_>| {
